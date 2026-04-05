@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Geist:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-text-primary font-sans antialiased;
+    background: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, #0b0f19 0%, #1a1f2e 100%);
+    min-height: 100vh;
+  }
+
+  body.light-mode {
+    @apply bg-background-light text-text-primary-light;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  }
+
+  * {
+    @apply border-border;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-surface border border-border rounded-2xl shadow-lg backdrop-blur-xl;
+  }
+
+  .glass-card.light-mode {
+    @apply bg-surface-light border-border-light;
+  }
+
+  .primary-button {
+    @apply bg-primary text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:brightness-110;
+  }
+
+  .secondary-button {
+    @apply border-2 border-primary text-primary font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:bg-primary hover:text-white;
+  }
+
+  .secondary-button.light-mode {
+    @apply border-primary-light text-primary-light hover:bg-primary-light hover:text-white;
+  }
+
+  .glow-text {
+    text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+  }
+
+  .fade-in-up {
+    animation: fade-in-up 0.6s ease-out;
+  }
+
+  .stagger-children > * {
+    animation: stagger 0.1s ease-out;
+  }
+
+  .stagger-children > *:nth-child(1) { animation-delay: 0s; }
+  .stagger-children > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger-children > *:nth-child(3) { animation-delay: 0.2s; }
+  .stagger-children > *:nth-child(4) { animation-delay: 0.3s; }
+  .stagger-children > *:nth-child(5) { animation-delay: 0.4s; }
+  .stagger-children > *:nth-child(6) { animation-delay: 0.5s; }
+}
