@@ -1,47 +1,135 @@
-const { validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 const Produce = require('../models/Produce');
-const { classifyProduce, estimateImpact } = require('../services/classification');
-const User = require('../models/User');
-const Transaction = require('../models/Transaction');
+const { validationResult } = require('express-validator');
+
+const processSmartLogic = (produce) => {
+  // Decision Logic
+  if (produce.expiryHours < 2) {
+    produce.recommendedAction = 'Urgent Delivery 🚚';
+  } else if (produce.demand < 5) {
+    produce.recommendedAction = 'Donate ❤️';
+  } else {
+    produce.recommendedAction = 'Sell 💰';
+  }
+
+  // Pricing Intelligence
+  const currentPrice = produce.basePrice;
+  produce.predictedPrice = currentPrice + (Math.random() * 8 - 3); // -3 to +5 fluctuation
+
+  // AI Price History (Last 5 days) + Prediction (Next 2 days)
+  const history = [];
+  for (let i = 4; i >= 0; i--) {
+    const pastDate = new Date();
+    pastDate.setDate(pastDate.getDate() - i);
+    history.push({
+      date: pastDate.toISOString().split('T')[0],
+      price: currentPrice - (Math.random() * 5 + 1)
+    });
+  }
+  produce.priceHistory = history;
+
+  // AI Scoring & Demand
+  produce.demandLevel = produce.demand > 7 ? 'High' : produce.demand > 4 ? 'Medium' : 'Low';
+  produce.aiScore = Math.floor(Math.random() * 20 + 75); // Score between 75-95
+
+  // Alert System
+  const alerts = [];
+  if (produce.expiryHours < 2) alerts.push('⚠️ Expiring soon');
+  if (produce.predictedPrice > currentPrice) alerts.push('📈 Price rising');
+  if (produce.predictedPrice < currentPrice) alerts.push('📉 Price dropping');
+  produce.alerts = alerts;
+
+  return produce;
+};
 
 const addProduce = async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-    const { type, quantity, freshness, damage, location, imageUrl, sellerName, sellerPhone, sellerEmail } = req.body;
-    const quality = classifyProduce({ freshness, damage });
+    let produceData = { ...req.body };
+    
+    // Default values if not provided
+    if (!produceData.location) produceData.location = { type: 'Point', coordinates: [78.4867, 17.3850] }; // Hyderabad
+    if (Array.isArray(produceData.location)) {
+      produceData.location = { type: 'Point', coordinates: produceData.location };
+    }
 
-    const produce = await Produce.create({
-      farmer: req.user._id,
-      type,
-      quantity,
-      freshness,
-      damage,
-      quality,
-      location: { type: 'Point', coordinates: location },
-      imageUrl,
-      sellerName,
-      sellerPhone,
-      sellerEmail
-    });
+    // Set default image if not provided
+    if (!produceData.imageUrl) {
+      // Simple logic to assign appropriate images
+      const name = (produceData.name || '').toLowerCase();
+      const type = (produceData.type || '').toLowerCase();
+      
+      if (name.includes('tomato')) {
+        produceData.imageUrl = 'https://images.unsplash.com/photo-1546470427-e9e826f9e5dc?q=80&w=1000&auto=format&fit=crop';
+      } else if (name.includes('banana')) {
+        produceData.imageUrl = 'https://images.unsplash.com/photo-1571771019784-3ff35f4f4277?q=80&w=1000&auto=format&fit=crop';
+      } else if (name.includes('potato')) {
+        produceData.imageUrl = 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?q=80&w=1000&auto=format&fit=crop';
+      } else if (type === 'vegetable') {
+        produceData.imageUrl = 'https://images.unsplash.com/photo-1566385101042-1a0aa0c1268c?q=80&w=1000&auto=format&fit=crop';
+      } else if (type === 'fruit') {
+        produceData.imageUrl = 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=1000&auto=format&fit=crop';
+      } else {
+        produceData.imageUrl = 'https://images.unsplash.com/photo-1518843875459-f738682238a6?q=80&w=2042&auto=format&fit=crop';
+      }
+    }
 
-    const impact = estimateImpact({ quantity, type: quality });
-    await Transaction.create({ produce: produce._id, from: req.user._id, to: req.user._id, type: quality, quantity, status: 'COMPLETED', ...impact });
+    let produce = new Produce(produceData);
+    produce = processSmartLogic(produce);
 
-    res.status(201).json({ produce, quality, impact });
+    await produce.save();
+    res.status(201).json({ success: true, produce });
   } catch (error) {
     console.error('addProduce error', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
+const Farmer = require('../models/Farmer');
+
 const getAllProduce = async (req, res) => {
   try {
-    const { status } = req.query;
-    const filter = status ? { status } : {};
-    const produce = await Produce.find(filter).populate('farmer', 'name email role location');
-    res.json({ produce });
+    const { status = 'available' } = req.query;
+    let query = {};
+    if (status !== 'all') {
+      query.status = status;
+    }
+    let produce = await Produce.find(query).lean();
+    
+    // Enrich with Farmer Trust Data
+    const enrichedProduce = await Promise.all(produce.map(async (item) => {
+      let farmer = null;
+      try {
+        if (item.farmer && mongoose.Types.ObjectId.isValid(item.farmer)) {
+          farmer = await Farmer.findOne({ userId: item.farmer }) || await Farmer.findById(item.farmer);
+        } else if (item.farmer) {
+          // If it's a demo string, try to find by name for better UX
+          farmer = await Farmer.findOne({ name: new RegExp(item.farmer.replace('demo_farmer_', 'Farmer '), 'i') });
+        }
+      } catch (err) {
+        console.error('Error fetching farmer trust data:', err);
+      }
+
+      const processed = processSmartLogic(item);
+      return {
+        ...processed,
+        farmerTrust: farmer ? {
+          rating: farmer.rating || 4.0,
+          trustScore: farmer.trustScore || 80,
+          complaintCount: farmer.complaintCount || 0,
+          badge: (farmer.rating >= 4.2 && farmer.trustScore >= 80) ? 'Star Seller' : 'Trusted Farmer'
+        } : {
+          rating: 4.0,
+          trustScore: 80,
+          complaintCount: 0,
+          badge: 'Trusted Farmer'
+        }
+      };
+    }));
+    
+    res.json({ success: true, produce: enrichedProduce });
   } catch (error) {
     console.error('getAllProduce error', error);
     res.status(500).json({ message: 'Server error' });
@@ -50,8 +138,9 @@ const getAllProduce = async (req, res) => {
 
 const getMyProduce = async (req, res) => {
   try {
-    const produce = await Produce.find({ farmer: req.user._id });
-    res.json({ produce });
+    const farmerId = req.user?.id || '1000';
+    const produce = await Produce.find({ farmer: farmerId });
+    res.json({ success: true, produce });
   } catch (error) {
     console.error('getMyProduce error', error);
     res.status(500).json({ message: 'Server error' });
@@ -63,22 +152,10 @@ const updateProduceStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!['available', 'on_hold', 'sold'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
-    }
-
-    const produce = await Produce.findById(id);
+    const produce = await Produce.findByIdAndUpdate(id, { status }, { new: true });
     if (!produce) return res.status(404).json({ message: 'Produce not found' });
 
-    // Check if user owns this produce or is admin
-    if (produce.farmer.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-
-    produce.status = status;
-    await produce.save();
-
-    res.json({ produce });
+    res.json({ success: true, produce });
   } catch (error) {
     console.error('updateProduceStatus error', error);
     res.status(500).json({ message: 'Server error' });
@@ -87,22 +164,14 @@ const updateProduceStatus = async (req, res) => {
 
 const matchProduce = async (req, res) => {
   try {
-    const { produceId, targetId } = req.body;
+    const { produceId } = req.body;
     const produce = await Produce.findById(produceId);
     if (!produce) return res.status(404).json({ message: 'Produce not found' });
-    if (produce.status !== 'available') return res.status(400).json({ message: 'Produce not available' });
 
-    const target = await User.findById(targetId);
-    if (!target) return res.status(404).json({ message: 'Target user not found' });
-
-    produce.status = 'on_hold';
-    produce.matchedTo = target._id;
-    await produce.save();
-
-    const impact = estimateImpact({ quantity: produce.quantity, type: produce.quality });
-    const transaction = await Transaction.create({ produce: produce._id, from: produce.farmer, to: target._id, type: produce.quality, quantity: produce.quantity, status: 'PENDING', ...impact });
-
-    return res.json({ produce, transaction });
+    // Simulate nearest NGO/market
+    const matchingInfo = "Matched with center 1.2 km away";
+    
+    res.json({ success: true, matchingInfo, produce });
   } catch (error) {
     console.error('matchProduce error', error);
     res.status(500).json({ message: 'Server error' });

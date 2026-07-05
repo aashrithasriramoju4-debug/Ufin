@@ -8,14 +8,20 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@huggingface/inference": "^4.13.15",
+    "axios": "^1.15.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.1.4",
     "express": "^4.18.2",
     "express-validator": "^6.15.0",
+    "groq-sdk": "^1.1.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.5.0",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "openai": "^6.34.0",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

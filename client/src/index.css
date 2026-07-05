@@ -1,40 +1,98 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Geist:wght@100;200;300;400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  html {
-    @apply scroll-smooth;
-  }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap');
 
-  body {
-    @apply bg-background text-text-primary font-sans antialiased;
-    background: radial-gradient(ellipse at top, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-                linear-gradient(135deg, #0b0f19 0%, #1a1f2e 100%);
-    min-height: 100vh;
-  }
+:root {
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --secondary: #3b82f6;
+  --accent: #f59e0b;
+  --background: #0f172a;
+  --surface: #1e293b;
+  --surface-hover: #334155;
+  --border: rgba(255, 255, 255, 0.08);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+}
 
-  body.light-mode {
-    @apply bg-background-light text-text-primary-light;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  }
+.light-mode {
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --surface-hover: #f1f5f9;
+  --border: rgba(0, 0, 0, 0.08);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+}
 
-  * {
-    @apply border-border;
-  }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--background);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease;
+  overflow-x: hidden;
+}
+
+.font-display {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Premium Glassmorphism */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+}
+
+.light-mode .glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Smooth Animations */
+@keyframes gradient-x {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 15s ease infinite;
+}
+
+/* Premium Badges */
+.badge-star-seller {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.badge-trusted {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-hover);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-surface border border-border rounded-2xl shadow-lg backdrop-blur-xl;
-  }
-
-  .glass-card.light-mode {
-    @apply bg-surface-light border-border-light;
-  }
-
   .primary-button {
     @apply bg-primary text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:brightness-110;
   }
@@ -66,3 +124,22 @@
   .stagger-children > *:nth-child(5) { animation-delay: 0.4s; }
   .stagger-children > *:nth-child(6) { animation-delay: 0.5s; }
 }
+
+/* Custom Leaflet Marker Styles */
+.custom-hub-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-popup-content-wrapper {
+  background: var(--surface) !important;
+  color: var(--text-primary) !important;
+  border-radius: 16px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--surface) !important;
+}
+

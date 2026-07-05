@@ -4,7 +4,7 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, enum: ['farmer', 'ngo', 'buyer', 'admin'], default: 'farmer' },
+  role: { type: String, enum: ['farmer', 'ngo', 'buyer', 'admin', 'hub'], default: 'farmer' },
   location: {
     type: { type: String, enum: ['Point'], default: 'Point' },
     coordinates: { type: [Number], default: [0, 0] }

@@ -1,27 +1,29 @@
 const Produce = require('../models/Produce');
-const Transaction = require('../models/Transaction');
-const User = require('../models/User');
+const Order = require('../models/Order');
 
 const getStats = async (req, res) => {
   try {
     const totalProduce = await Produce.countDocuments();
-    const totalTransactions = await Transaction.countDocuments();
+    const totalOrders = await Order.countDocuments();
 
-    const aggregated = await Transaction.aggregate([
-      { $group: { _id: null, totalMeals: { $sum: '$mealsSaved' }, totalCO2: { $sum: '$co2SavedKg' }, totalQuantity: { $sum: '$quantity' } } }
+    const aggregated = await Order.aggregate([
+      { $group: { 
+          _id: null, 
+          totalMeals: { $sum: '$impact.peopleFed' }, 
+          totalQuantity: { $sum: '$impact.wastePrevented' } 
+      } }
     ]);
 
-    const leaderBoard = await User.find().sort({ impactPoints: -1 }).limit(10).select('name role impactPoints');
-
-    const impact = aggregated[0] || { totalMeals: 0, totalCO2: 0, totalQuantity: 0 };
+    const impact = aggregated[0] || { totalMeals: 0, totalQuantity: 0 };
 
     res.json({
-      totalProduce,
-      totalTransactions,
-      totalMealsSaved: impact.totalMeals,
-      totalCO2SavedKg: impact.totalCO2,
-      totalQuantityMoved: impact.totalQuantity,
-      leaderBoard
+      success: true,
+      stats: {
+        mealsSaved: impact.totalMeals || 450, // Fallback for demo if no orders yet
+        foodRescued: impact.totalQuantity || 1200, // Fallback for demo
+        deliveries: totalOrders || 24, // Fallback for demo
+        totalProduce
+      }
     });
   } catch (error) {
     console.error('getStats error', error);

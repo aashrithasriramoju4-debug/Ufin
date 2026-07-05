@@ -66,6 +66,7 @@ module.exports = {
         'float': 'float 3s ease-in-out infinite',
         'fade-in-up': 'fadeInUp 0.6s ease-out',
         'stagger': 'stagger 0.1s ease-out',
+        'gradient-x': 'gradient-x 3s ease infinite',
       },
       keyframes: {
         fadeIn: {
@@ -92,10 +93,19 @@ module.exports = {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-5px)' },
         },
+        'gradient-x': {
+          '0%, 100%': {
+            'background-size': '200% 200%',
+            'background-position': 'left center'
+          },
+          '50%': {
+            'background-size': '200% 200%',
+            'background-position': 'right center'
+          },
+        },
       },
-      boxShadow: {
-        'neon': '0 0 10px rgba(99, 102, 241, 0.3)',
-        'neon-hover': '0 0 20px rgba(99, 102, 241, 0.6)',
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
       },
     },
   },
