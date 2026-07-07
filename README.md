@@ -10,6 +10,13 @@ Full-stack app for redistributing imperfect agricultural produce. Includes farme
   - `/controllers`: business logic
   - `/services`: classification/matching/auth
 - `/client`: React + Vite + Tailwind frontend
+  ## 🎥 Project Demo
+
+Watch the complete project demonstration here:
+
+[![Watch the Demo](https://img.youtube.com/vi/6Rw6OYu4Wqo/maxresdefault.jpg)](https://youtu.be/6Rw6OYu4Wqo?si=u7cK_qHCNQO0Y_1H)
+
+**🔗 YouTube:** https://youtu.be/6Rw6OYu4Wqo?si=u7cK_qHCNQO0Y_1H
 
 ## Setup
 ### Backend
